@@ -125,6 +125,15 @@ COPY ./entrypoint.sh /
 COPY ./sdcard_make/shuaxie.sh /
 RUN chmod a+x ./entrypoint.sh
 RUN chmod a+x ./shuaxie.sh
+
+#debian
+RUN apt-get install debootstrap qemu-user-static
+RUN mkdir /path/to/rootfs
+RUN debootstrap --foreign --arch=arm64 buster /path/to/rootfs https://deb.debian.org/debian
+RUN cp /usr/bin/qemu-aarch64-static /path/to/rootfs/usr/bin/
+RUN chroot /path/to/rootfs /debootstrap/debootstrap --second-stage
+# RUN chroot /path/to/rootfs /bin/bash
+
 # ENTRYPOINT ["/entrypoint.sh"]
 
 # # 在内核中执行 安装模块到第二分区的rootfs中（因为内核没经过裁剪会有大量的模块安装到第二分区，可能需要调整下第二分区的大小）
