@@ -24,6 +24,17 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	connector {
+		compatible = "hdmi-connector";
+		type = "d";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -270,6 +281,21 @@ wifi_pwrseq: wifi-pwrseq {
 		rotation = <90>;
 		width = <172>;
 		height = <320>;
+	};
+};
+
+&de {
+	status = "okay";
+};
+
+&hdmi {
+	hvcc-supply = <&reg_bldo1>;
+	status = "okay";
+};
+
+&hdmi_out {
+	hdmi_out_con: endpoint {
+		remote-endpoint = <&hdmi_con_in>;
 	};
 };
 
