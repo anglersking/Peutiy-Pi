@@ -1,11 +1,13 @@
-# h616_sys_migrate
+# Peutiy-Pi (菩提派)
 
-全志 H616 (Orange Pi Zero2) 主线 Linux 系统移植项目，基于 Buildroot + 主线 U-Boot + 主线 Linux 内核。
+基于全志 H616 的自制 Linux 开发板，从零构建主线 Linux 系统。
+基于 Buildroot + 主线 U-Boot + 主线 Linux 内核，完全脱离芯片厂 BSP。
 
 ## 硬件
 
-- **SoC**: 全志 H616 (Quad-core Cortex-A53)
-- **开发板**: Orange Pi Zero2
+- **SoC**: 全志 H616 (Quad-core Cortex-A53 @ 1.5GHz)
+- **开发板**: Peutiy-Pi（菩提派），兼容 Orange Pi Zero2 设计
+- **PCB**: 自制双层板
 - **电源管理**: AXP305
 - **存储**: MicroSD + SPI NOR Flash
 - **网络**: 千兆以太网 + WiFi (RTL8723DS / XR829)
