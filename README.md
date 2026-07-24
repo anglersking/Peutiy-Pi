@@ -7,7 +7,7 @@
 
 - **SoC**: 全志 H616 (Quad-core Cortex-A53 @ 1.5GHz)
 - **开发板**: Peutiy-Pi（菩提派），兼容 Orange Pi Zero2 设计
-- **PCB**: 自制双层板
+- **PCB**: 自制六层板
 - **电源管理**: AXP305
 - **存储**: MicroSD + SPI NOR Flash
 - **网络**: 千兆以太网 + WiFi (RTL8723DS / XR829)
