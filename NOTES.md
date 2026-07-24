@@ -63,12 +63,17 @@ led {
     default-state = "on";
 };
 
-// I2C 传感器
+// I2C 传感器（引脚在总线节点指定，设备只写地址）
 &i2c3 {
     status = "okay";
+    pinctrl-names = "default";
+    pinctrl-0 = <&i2c3_pa_pins>;   // PA10=SCL, PA11=SDA  ← 引脚在这里
+
     mpu6050@68 {
         compatible = "invensense,mpu6050";
-        reg = <0x68>;
+        reg = <0x68>;               // I2C 从设备地址，不是引脚
+        interrupt-parent = <&pio>;
+        interrupts = <0 12 IRQ_TYPE_EDGE_RISING>;  // 中断脚（可选）
     };
 };
 ```
@@ -80,6 +85,17 @@ led {
 ```
 ① 硬件接线 → ② 写设备树 → ③ 开内核 CONFIG → ④ 编译 → ⑤ 应用层使用
 ```
+
+### 外设引脚指定方式
+
+| 外设类型 | 在哪指定引脚 | 例子 |
+|----------|-------------|------|
+| I2C | `pinctrl-0` 在总线节点 | `&i2c3 { pinctrl-0 = <&i2c3_pa_pins>; }` |
+| SPI | `pinctrl-0` 在总线节点 | `&spi1 { pinctrl-0 = <&spi1_pins>, <&spi1_cs0_pin>; }` |
+| GPIO（DC/RESET等） | `xxx-gpios` 在设备节点 | `dc-gpios = <&pio 6 6 GPIO_ACTIVE_HIGH>;` |
+| 中断 | `interrupts` 在设备节点 | `interrupts = <0 12 IRQ_TYPE_EDGE_RISING>;` |
+
+**为什么 I2C/SPI 引脚在总线层？** 因为 SCL/SDA 或 CLK/MOSI/MISO 是总线上所有设备共享的，设备节点只写自己的地址（`reg`）。
 
 ### 判断要不要写 C 驱动
 
