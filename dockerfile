@@ -52,9 +52,11 @@ RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trust
 
 RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin -j100
 
-# Switch to apritzel/h616-v13 kernel for HDMI/DE2 display support
-RUN wget https://github.com/apritzel/linux/archive/h616-v13.tar.gz
-RUN tar -xvf h616-v13.tar.gz && mv linux-h616-v13 linux-6.0.19
+RUN wget https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.0.19.tar.gz
+# COPY ./linux-6.0.19.tar.gz /
+RUN tar -xvf linux-6.0.19.tar.gz
+# Replace dtsi with YuzukiHD version containing HDMI/DE nodes
+COPY ./sun50i-h616-yuzuki.dtsi /linux-6.0.19/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
 
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 Image
