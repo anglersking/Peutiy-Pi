@@ -256,7 +256,7 @@ wifi_pwrseq: wifi-pwrseq {
 &spi0  {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&spi0_pins>, <&spi0_cs0_pin>;
+	pinctrl-0 = <&spi0_pins>;
 
 	flash@0 {
 		#address-cells = <1>;
@@ -270,7 +270,7 @@ wifi_pwrseq: wifi-pwrseq {
 &spi1 {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&spi1_pins>, <&spi1_cs0_pin>;
+	pinctrl-0 = <&spi1_pins>, <&spi1_cs_pin>;
 
 	display@0 {
 		compatible = "sitronix,st7789v";
