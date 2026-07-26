@@ -47,7 +47,7 @@ RUN apt-get install -y usbutils rsync
 
 COPY ./uboot_config /u-boot-2024.01/.config
 COPY ./axp305.c /u-boot-2024.01/drivers/power/axp305.c
-COPY ./dram_sun50i_h616.c arch/arm/mach-sunxi/dram_sun50i_h616.c
+COPY ./dram_sun50i_h616.c /u-boot-2024.01/arch/arm/mach-sunxi/dram_sun50i_h616.c
 RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin orangepi_zero2_defconfig -j100
 
 RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin -j100
@@ -57,6 +57,8 @@ RUN wget https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.0.19.tar.
 RUN tar -xvf linux-6.0.19.tar.gz
 # Replace dtsi with YuzukiHD version containing HDMI/DE nodes
 COPY ./sun50i-h616-yuzuki.dtsi /linux-6.0.19/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+# Replace dts too, otherwise original dts references spi0_cs0_pin which doesn't exist in yuzuki dtsi
+COPY ./main_sun50i-h616-orangepi-zero2.dts /linux-6.0.19/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
 
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 Image
