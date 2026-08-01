@@ -14,11 +14,11 @@ RUN tar xvf u-boot-2024.01.tar.bz2
 RUN rm -r u-boot-2024.01.tar.bz2
 
 
-RUN wget --no-check-certificate  https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
-RUN tar -xvf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
-# RUN cd gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu && 
-RUN mv gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu /opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu
-RUN ln -sf /opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/*  /usr/bin/
+# Linaro 7.5 已从 releases.linaro.org 下架，改用 ARM 官方 10.3 (兼容 H616)
+RUN wget --no-check-certificate https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz
+RUN tar -xJvf gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz
+RUN mv gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu /opt/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu
+RUN ln -sf /opt/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu/bin/*  /usr/bin/
 
 
 RUN apt-get install -y bison libncurses-dev flex
@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y python3 pip swig  git bc libusb-1.0-0-d
 
 RUN git clone https://github.com/ARM-software/arm-trusted-firmware.git
 # COPY ./arm-trusted-firmware /arm-trusted-firmware
-RUN cd arm-trusted-firmware && make CROSS_COMPILE=aarch64-linux-gnu- PLAT=sun50i_h616 DEBUG=1 bl31
+RUN cd arm-trusted-firmware && make CROSS_COMPILE=aarch64-none-linux-gnu- PLAT=sun50i_h616 DEBUG=1 bl31
 
 
 RUN  git clone https://github.com/linux-sunxi/sunxi-tools
@@ -48,21 +48,21 @@ RUN apt-get install -y usbutils rsync
 COPY ./uboot_config /u-boot-2024.01/.config
 COPY ./axp305.c /u-boot-2024.01/drivers/power/axp305.c
 COPY ./dram_sun50i_h616.c arch/arm/mach-sunxi/dram_sun50i_h616.c
-RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin orangepi_zero2_defconfig -j100
+RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-none-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin orangepi_zero2_defconfig -j100
 
-RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin -j100
+RUN cd u-boot-2024.01 && make CROSS_COMPILE=aarch64-none-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin -j100
 
 RUN wget https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.0.19.tar.gz
 # COPY ./linux-6.0.19.tar.gz /
 RUN tar -xvf linux-6.0.19.tar.gz
 
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 Image
-RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 dtbs
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 modules
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 Image
+RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 dtbs
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 modules
 #RUN  apt install -y depmod
 RUN  cd linux-6.0.19/ && mkdir MINSTALL && mkdir HINSTALL
-RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
+RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
 RUN  cd linux-6.0.19/ &&   make ARCH=arm64 INSTALL_HDR_PATH=HINSTALL headers_install
 
 
@@ -86,9 +86,9 @@ RUN cd /linux-6.0.19 && mkimage -C none -A arm64 -T script -d boot.cmd boot.scr
 
 
 # # COPY ./out/linux /linux
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- clean
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- clean
 
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig
 RUN cp -r /rtl8723ds  /linux-6.0.19/drivers/net/wireless/realtek/rtl8723ds
 RUN cp -r /Xradio-XR829  /linux-6.0.19/drivers/net/wireless/realtek/xr829
 
@@ -105,12 +105,12 @@ COPY ./main_sun50i-h616-orangepi-zero2.dts /linux-6.0.19/arch/arm64/boot/dts/all
 COPY ./linux_main_menuconfig /linux-6.0.19/.config
 
 RUN apt-get install -y libelf-dev apt-utils
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 Image
-RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 dtbs
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 modules
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 Image
+RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 dtbs
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 modules
 
 RUN  cd linux-6.0.19/ && rm -r MINSTALL/*  && rm -r HINSTALL/*
-RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
+RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
 RUN  cd linux-6.0.19/ &&   make ARCH=arm64 INSTALL_HDR_PATH=HINSTALL headers_install
 
 # COPY ./fixbug/ioctl_cfg80211.c /linux/drivers/net/wireless/realtek/rtl8723ds/os_dep/linux/ioctl_cfg80211.c
@@ -219,15 +219,15 @@ RUN chroot /path/to/rootfs /debootstrap/debootstrap --second-stage
 
 # 14  ls
 #   115  cd linux-6.0.19/
-#   116  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
-#   117  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 Image
-#   118  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 dtbs
-#   119  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- -j100 modules
+#   116  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig
+#   117  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 Image
+#   118  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 dtbs
+#   119  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 modules
 #   120  ls
 #   121  mkdir MINSTALL
 #   122  mkdir HINSTALL
-#   123  ake ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
-#   124  make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
+#   123  ake ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
+#   124  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
 #   125  make ARCH=arm64 INSTALL_HDR_PATH=HINSTALL headers_install
 #   126  apt-get install rsync
 #   127  make ARCH=arm64 INSTALL_HDR_PATH=HINSTALL headers_install
