@@ -59,7 +59,7 @@ RUN tar -xvf linux-6.0.19.tar.gz
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig
 RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 Image
 RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 dtbs
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 modules
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j2 modules
 #RUN  apt install -y depmod
 RUN  cd linux-6.0.19/ && mkdir MINSTALL && mkdir HINSTALL
 RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
@@ -71,7 +71,7 @@ RUN wget  https://buildroot.org/downloads/buildroot-2022.02.5.tar.gz
 RUN tar -xvf buildroot-2022.02.5.tar.gz
 COPY ./buildroot.config /buildroot-2022.02.5/.config
 RUN apt install -y file cpio unzip
-RUN cd /buildroot-2022.02.5 && make -j100
+RUN cd /buildroot-2022.02.5 && make -j2
 
 RUN git config --global http.postBuffer 524288000
 
@@ -105,9 +105,9 @@ COPY ./main_sun50i-h616-orangepi-zero2.dts /linux-6.0.19/arch/arm64/boot/dts/all
 COPY ./linux_main_menuconfig /linux-6.0.19/.config
 
 RUN apt-get install -y libelf-dev apt-utils
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 Image
-RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 dtbs
-RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j100 modules
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j2 Image
+RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j2 dtbs
+RUN  cd linux-6.0.19/ && make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- -j2 modules
 
 RUN  cd linux-6.0.19/ && rm -r MINSTALL/*  && rm -r HINSTALL/*
 RUN  cd linux-6.0.19/ &&  make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- INSTALL_MOD_PATH=./MINSTALL  modules modules_install
@@ -119,7 +119,7 @@ RUN  cd linux-6.0.19/ &&   make ARCH=arm64 INSTALL_HDR_PATH=HINSTALL headers_ins
 COPY ./buildroot_finally_config /buildroot-2022.02.5/.config
 # COPY ./fixbug/ioctl_cfg80211.c linux/drivers/net/wireless/realtek/rtl8723ds/os_dep/linux/ioctl_cfg80211.c
 # RUN cd /linux &&  make modules -j100
-RUN  cd /buildroot-2022.02.5 && make -j100
+RUN  cd /buildroot-2022.02.5 && make -j2
 RUN apt-get install -y kmod dosfstools
 COPY ./entrypoint.sh /
 COPY ./sdcard_make/shuaxie.sh /
