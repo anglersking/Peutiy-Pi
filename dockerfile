@@ -126,9 +126,9 @@ RUN chmod a+x ./entrypoint.sh
 RUN chmod a+x ./shuaxie.sh
 
 #debian
-RUN apt-get install -y debootstrap qemu-user-static
+RUN apt-get install -y debootstrap qemu-user-static debian-archive-keyring
 RUN mkdir -p /path/to/rootfs
-RUN debootstrap --foreign --arch=arm64 buster /path/to/rootfs https://deb.debian.org/debian
+RUN debootstrap --foreign --arch=arm64 bullseye /path/to/rootfs https://mirrors.tuna.tsinghua.edu.cn/debian/
 RUN cp /usr/bin/qemu-aarch64-static /path/to/rootfs/usr/bin/
 RUN chroot /path/to/rootfs /debootstrap/debootstrap --second-stage
 # RUN chroot /path/to/rootfs /bin/bash
