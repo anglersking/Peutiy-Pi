@@ -151,59 +151,9 @@ RUN cp /buildroot-2022.02.5/output/images/rootfs.tar /out/buildroot/
 # 拷贝 Debian rootfs (如果 debootstrap 成功的话)
 RUN if [ -f /path/to/rootfs/etc/debian_version ]; then cp -a /path/to/rootfs/. /out/debian/; fi
 
-# ====== 创建 SD 镜像 (双分区: FAT boot + ext4 rootfs) ======
-
-# --- Buildroot SD 镜像 ---
-RUN cd /out && \
-    SIZE=512 && \
-    dd if=/dev/zero of=sdcard_buildroot.img bs=1M count=$SIZE && \
-    printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_buildroot.img && \
-    LOOP=$(losetup -f) && \
-    losetup -P $LOOP sdcard_buildroot.img && \
-    mkfs.fat ${LOOP}p1 && \
-    mkfs.ext4 -F ${LOOP}p2 && \
-    dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
-    MNT=$(mktemp -d) && \
-    mount ${LOOP}p1 $MNT && \
-    cp Image $MNT/ && \
-    cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
-    cp boot.scr $MNT/ && \
-    umount $MNT && \
-    MNT2=$(mktemp -d) && \
-    mount ${LOOP}p2 $MNT2 && \
-    tar xf buildroot/rootfs.tar -C $MNT2 && \
-    cp -r modules $MNT2/lib/ && \
-    umount $MNT2 && \
-    losetup -d $LOOP && \
-    rm -rf $MNT $MNT2
-
-# --- Debian SD 镜像 (仅在 debian rootfs 存在时创建) ---
-RUN cd /out && \
-    if [ -f debian/etc/debian_version ]; then \
-      SIZE=512 && \
-      dd if=/dev/zero of=sdcard_debian.img bs=1M count=$SIZE && \
-      printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_debian.img && \
-      LOOP=$(losetup -f) && \
-      losetup -P $LOOP sdcard_debian.img && \
-      mkfs.fat ${LOOP}p1 && \
-      mkfs.ext4 -F ${LOOP}p2 && \
-      dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
-      MNT=$(mktemp -d) && \
-      mount ${LOOP}p1 $MNT && \
-      cp Image $MNT/ && \
-      cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
-      cp boot.scr $MNT/ && \
-      umount $MNT && \
-      MNT2=$(mktemp -d) && \
-      mount ${LOOP}p2 $MNT2 && \
-      cp -a debian/. $MNT2/ && \
-      cp -r modules $MNT2/lib/ && \
-      umount $MNT2 && \
-      losetup -d $LOOP && \
-      rm -rf $MNT $MNT2; \
-    else \
-      echo "Skipping sdcard_debian.img (no debian rootfs)"; \
-    fi
+# ====== 产物已就绪, SD 镜像请在宿主机运行 mksdimg.sh 创建 ======
+# 容器内 loop 设备有限, 无法创建双分区镜像
+# 宿主机路径: /mnt/nvme0n1-4/out/ (116G 可用)
 
 # ENTRYPOINT ["/entrypoint.sh"]
 
