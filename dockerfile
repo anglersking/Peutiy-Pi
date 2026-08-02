@@ -127,7 +127,7 @@ RUN chmod a+x ./shuaxie.sh
 
 #debian
 RUN apt-get install -y debootstrap qemu-user-static
-RUN mkdir /path/to/rootfs
+RUN mkdir -p /path/to/rootfs
 RUN debootstrap --foreign --arch=arm64 buster /path/to/rootfs https://deb.debian.org/debian
 RUN cp /usr/bin/qemu-aarch64-static /path/to/rootfs/usr/bin/
 RUN chroot /path/to/rootfs /debootstrap/debootstrap --second-stage
@@ -148,16 +148,19 @@ RUN cp /buildroot-2022.02.5/output/images/rootfs.ext2 /out/buildroot/
 RUN cp /buildroot-2022.02.5/output/images/rootfs.tar /out/buildroot/
 
 # 拷贝 Debian rootfs
-RUN cp -r /path/to/rootfs/* /out/debian/
+RUN cp -a /path/to/rootfs/. /out/debian/
 
-# ====== 创建 Buildroot SD 镜像 ======
-# SD卡结构: [保留8KB uboot] + [FAT boot分区 128M] + [ext4 rootfs分区 余下空间]
+# ====== 创建 SD 镜像 (双分区: FAT boot + ext4 rootfs) ======
+
+# --- Buildroot SD 镜像 ---
 RUN cd /out && \
-    dd if=/dev/zero of=sdcard_buildroot.img bs=1M count=512 && \
-    printf "n\np\n1\n\n40960\n\n303104\nnt\nc\nw\n" | fdisk sdcard_buildroot.img ; \
+    SIZE=512 && \
+    dd if=/dev/zero of=sdcard_buildroot.img bs=1M count=$SIZE && \
+    printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_buildroot.img && \
     LOOP=$(losetup -f) && \
     losetup -P $LOOP sdcard_buildroot.img && \
     mkfs.fat ${LOOP}p1 && \
+    mkfs.ext4 -F ${LOOP}p2 && \
     dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
     MNT=$(mktemp -d) && \
     mount ${LOOP}p1 $MNT && \
@@ -165,16 +168,23 @@ RUN cd /out && \
     cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
     cp boot.scr $MNT/ && \
     umount $MNT && \
+    MNT2=$(mktemp -d) && \
+    mount ${LOOP}p2 $MNT2 && \
+    tar xf buildroot/rootfs.tar -C $MNT2 && \
+    cp -r modules $MNT2/lib/ && \
+    umount $MNT2 && \
     losetup -d $LOOP && \
-    rm -rf $MNT
+    rm -rf $MNT $MNT2
 
-# ====== 创建 Debian SD 镜像 ======
+# --- Debian SD 镜像 ---
 RUN cd /out && \
-    dd if=/dev/zero of=sdcard_debian.img bs=1M count=512 && \
-    printf "n\np\n1\n\n40960\n\n303104\nw\n" | fdisk sdcard_debian.img ; \
+    SIZE=512 && \
+    dd if=/dev/zero of=sdcard_debian.img bs=1M count=$SIZE && \
+    printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_debian.img && \
     LOOP=$(losetup -f) && \
     losetup -P $LOOP sdcard_debian.img && \
     mkfs.fat ${LOOP}p1 && \
+    mkfs.ext4 -F ${LOOP}p2 && \
     dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
     MNT=$(mktemp -d) && \
     mount ${LOOP}p1 $MNT && \
@@ -182,8 +192,13 @@ RUN cd /out && \
     cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
     cp boot.scr $MNT/ && \
     umount $MNT && \
+    MNT2=$(mktemp -d) && \
+    mount ${LOOP}p2 $MNT2 && \
+    cp -a debian/. $MNT2/ && \
+    cp -r modules $MNT2/lib/ && \
+    umount $MNT2 && \
     losetup -d $LOOP && \
-    rm -rf $MNT
+    rm -rf $MNT $MNT2
 
 # ENTRYPOINT ["/entrypoint.sh"]
 
