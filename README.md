@@ -62,21 +62,29 @@ cat /sys/class/drm/card0-HDMI-A-1/status
 | Linux Kernel | h616-v13 (apritzel) | 含 HDMI/H616 完整驱动 + 无线网卡驱动 |
 | GCC 工具链 | ARM 10.3 (aarch64-none-linux-gnu) | 替代已下架的 Linaro 7.5 |
 | Buildroot | 2022.02.5 | 根文件系统 + 编译无线驱动后重编内核 |
-| Debian | Buster arm64 | debootstrap 引导，备选 rootfs |
+| Debian | Bullseye arm64 | debootstrap 引导，备选 rootfs |
 
 ## 快速开始
 
-### 1. 构建 Docker 镜像
+### 方式一：一键构建 + 出 SD 镜像（推荐）
 
 ```bash
 git clone https://github.com/anglersking/Peutiy-Pi.git
 cd Peutiy-Pi
 
-# 构建（⚠️ 耗时较长，建议在路由器等 24h 在线设备上后台跑）
-docker build --network=host -t h616_core_build . 2>&1 | tee build.log
+# 一条命令：编译 + 提取产物 + 制作 SD img
+# 产物自动输出到 /mnt/nvme0n1-4/out/
+sh build_all.sh /mnt/nvme0n1-4/out
 ```
 
-### 2. 提取构建产物
+### 方式二：只编译（产物在容器内）
+
+```bash
+docker build --network=host -t h616_core_build . 2>&1 | tee build.log
+# 产物在容器 /out/ 下，需要手动 docker cp 出来
+```
+
+### 提取构建产物 (方式二后续)
 
 ```bash
 # 创建 out 目录并运行容器
