@@ -284,21 +284,6 @@ wifi_pwrseq: wifi-pwrseq {
 	};
 };
 
-&de {
-	status = "okay";
-};
-
-&hdmi {
-	hvcc-supply = <&reg_bldo1>;
-	status = "okay";
-};
-
-&hdmi_out {
-	hdmi_out_con: endpoint {
-		remote-endpoint = <&hdmi_con_in>;
-	};
-};
-
 &uart0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart0_ph_pins>;
