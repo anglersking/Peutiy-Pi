@@ -24,18 +24,7 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	connector {
-		compatible = "hdmi-connector";
-		type = "d";
-
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
-		};
-	};
-
-	leds {
+leds {
 		compatible = "gpio-leds";
 
 		led-0 {
