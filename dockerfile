@@ -125,12 +125,13 @@ COPY ./sdcard_make/shuaxie.sh /
 RUN chmod a+x ./entrypoint.sh
 RUN chmod a+x ./shuaxie.sh
 
-#debian
+#debian (需要 docker 加 --privileged 才能 chroot 到 arm64;
+# 如果只想要 Buildroot 版本可以注释掉)
 RUN apt-get install -y debootstrap qemu-user-static debian-archive-keyring
 RUN mkdir -p /path/to/rootfs
 RUN debootstrap --foreign --arch=arm64 bullseye /path/to/rootfs https://mirrors.tuna.tsinghua.edu.cn/debian/
 RUN cp /usr/bin/qemu-aarch64-static /path/to/rootfs/usr/bin/
-RUN chroot /path/to/rootfs /debootstrap/debootstrap --second-stage
+RUN chroot /path/to/rootfs /usr/bin/qemu-aarch64-static /bin/bash -c "/debootstrap/debootstrap --second-stage" || echo "WARNING: debootstrap second-stage failed (need binfmt_misc), skipping Debian rootfs"
 # RUN chroot /path/to/rootfs /bin/bash
 
 # ====== 产物整理到 /out ======
@@ -147,8 +148,8 @@ RUN cp /u-boot-2024.01/u-boot-sunxi-with-spl.bin /out/
 RUN cp /buildroot-2022.02.5/output/images/rootfs.ext2 /out/buildroot/
 RUN cp /buildroot-2022.02.5/output/images/rootfs.tar /out/buildroot/
 
-# 拷贝 Debian rootfs
-RUN cp -a /path/to/rootfs/. /out/debian/
+# 拷贝 Debian rootfs (如果 debootstrap 成功的话)
+RUN if [ -f /path/to/rootfs/etc/debian_version ]; then cp -a /path/to/rootfs/. /out/debian/; fi
 
 # ====== 创建 SD 镜像 (双分区: FAT boot + ext4 rootfs) ======
 
@@ -176,29 +177,33 @@ RUN cd /out && \
     losetup -d $LOOP && \
     rm -rf $MNT $MNT2
 
-# --- Debian SD 镜像 ---
+# --- Debian SD 镜像 (仅在 debian rootfs 存在时创建) ---
 RUN cd /out && \
-    SIZE=512 && \
-    dd if=/dev/zero of=sdcard_debian.img bs=1M count=$SIZE && \
-    printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_debian.img && \
-    LOOP=$(losetup -f) && \
-    losetup -P $LOOP sdcard_debian.img && \
-    mkfs.fat ${LOOP}p1 && \
-    mkfs.ext4 -F ${LOOP}p2 && \
-    dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
-    MNT=$(mktemp -d) && \
-    mount ${LOOP}p1 $MNT && \
-    cp Image $MNT/ && \
-    cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
-    cp boot.scr $MNT/ && \
-    umount $MNT && \
-    MNT2=$(mktemp -d) && \
-    mount ${LOOP}p2 $MNT2 && \
-    cp -a debian/. $MNT2/ && \
-    cp -r modules $MNT2/lib/ && \
-    umount $MNT2 && \
-    losetup -d $LOOP && \
-    rm -rf $MNT $MNT2
+    if [ -f debian/etc/debian_version ]; then \
+      SIZE=512 && \
+      dd if=/dev/zero of=sdcard_debian.img bs=1M count=$SIZE && \
+      printf "n\np\n1\n\n40960\n\n303104\nn\np\n2\n\n303105\n\n\nw\n" | fdisk sdcard_debian.img && \
+      LOOP=$(losetup -f) && \
+      losetup -P $LOOP sdcard_debian.img && \
+      mkfs.fat ${LOOP}p1 && \
+      mkfs.ext4 -F ${LOOP}p2 && \
+      dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=8K seek=1 && \
+      MNT=$(mktemp -d) && \
+      mount ${LOOP}p1 $MNT && \
+      cp Image $MNT/ && \
+      cp sun50i-h616-orangepi-zero2.dtb $MNT/ && \
+      cp boot.scr $MNT/ && \
+      umount $MNT && \
+      MNT2=$(mktemp -d) && \
+      mount ${LOOP}p2 $MNT2 && \
+      cp -a debian/. $MNT2/ && \
+      cp -r modules $MNT2/lib/ && \
+      umount $MNT2 && \
+      losetup -d $LOOP && \
+      rm -rf $MNT $MNT2; \
+    else \
+      echo "Skipping sdcard_debian.img (no debian rootfs)"; \
+    fi
 
 # ENTRYPOINT ["/entrypoint.sh"]
 
