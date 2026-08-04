@@ -12,9 +12,6 @@ RUN apt update && \
         debootstrap qemu-user-static debian-archive-keyring || \
     true
 
-# Workaround: 有些包可能装不上，再分步装保底
-RUN apt-get install -y python3 pip swig git bc libusb-1.0-0-dev pkg-config
-
 # ====== U-Boot ======
 RUN wget https://ftp.denx.de/pub/u-boot/u-boot-2024.01.tar.bz2 && \
     tar xvf u-boot-2024.01.tar.bz2 && \
@@ -42,6 +39,7 @@ COPY ./dram_sun50i_h616.c arch/arm/mach-sunxi/dram_sun50i_h616.c
 RUN cd u-boot-2024.01 && \
     make CROSS_COMPILE=aarch64-none-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin orangepi_zero2_defconfig -j2 && \
     make CROSS_COMPILE=aarch64-none-linux-gnu- BL31=../arm-trusted-firmware/build/sun50i_h616/debug/bl31.bin -j2
+# 注意: 上面两条 make 不是重复 —— 第一条是 defconfig, 第二条才编译
 
 # ====== apritzel linux h616-v13 内核（含 HDMI DTS + 驱动） ======
 RUN git config --global http.postBuffer 524288000 && \
