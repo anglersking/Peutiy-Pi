@@ -24,6 +24,17 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	connector {
+		compatible = "hdmi-connector";
+		type = "d";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&hdmi_out_con>;
+			};
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
@@ -51,51 +62,45 @@
 	};
 
 	reg_vcc3v3: vcc3v3 {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc-3v3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		regulator-always-on;
-	};
+	compatible = "regulator-fixed";
+	regulator-name = "vcc-3v3";
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-always-on;
+};
+
+	
+
 
 	reg_vcc33_wifi: vcc33-wifi {
-		/* Always on 3.3V regulator for WiFi and BT */
-		compatible = "regulator-fixed";
-		regulator-name = "vcc33-wifi";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		regulator-always-on;
-		vin-supply = <&reg_vcc5v>;
-	};
+	/* Always on 3.3V regulator for WiFi and BT */
+	compatible = "regulator-fixed";
+	regulator-name = "vcc33-wifi";
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-always-on;
+	vin-supply = <&reg_vcc5v>;
+};
 
-	reg_vcc_wifi_io: vcc-wifi-io {
-		/* Always on 1.8V/300mA regulator for WiFi and BT IO */
-		compatible = "regulator-fixed";
-		regulator-name = "vcc-wifi-io";
-		regulator-min-microvolt = <1800000>;
-		regulator-max-microvolt = <1800000>;
-		regulator-always-on;
-		vin-supply = <&reg_vcc33_wifi>;
-	};
+reg_vcc_wifi_io: vcc-wifi-io {
+	/* Always on 1.8V/300mA regulator for WiFi and BT IO */
+	compatible = "regulator-fixed";
+	regulator-name = "vcc-wifi-io";
+	regulator-min-microvolt = <1800000>;
+	regulator-max-microvolt = <1800000>;
+	regulator-always-on;
+	vin-supply = <&reg_vcc33_wifi>;
+};
 
-	wifi_pwrseq: wifi-pwrseq {
-		compatible = "mmc-pwrseq-simple";
-		clocks = <&rtc 1>;
-		clock-names = "osc32k-out";
-		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
-		post-power-on-delay-ms = <200>;
-	};
+wifi_pwrseq: wifi-pwrseq {
+	compatible = "mmc-pwrseq-simple";
+	clocks = <&rtc 1>;
+	clock-names = "osc32k-out";
+	reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
+	post-power-on-delay-ms = <200>;
+};
 
-	connector {
-		compatible = "hdmi-connector";
-		type = "d";
 
-		port {
-			hdmi_con_in: endpoint {
-				remote-endpoint = <&hdmi_out_con>;
-			};
-		};
-	};
 };
 
 &emac0 {
@@ -122,7 +127,6 @@
 	bus-width = <4>;
 	status = "okay";
 };
-
 &mmc1 {
 	vmmc-supply = <&reg_vcc33_wifi>;
 	vqmmc-supply = <&reg_vcc_wifi_io>;
@@ -252,7 +256,7 @@
 &spi0  {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&spi0_pins>, <&spi0_cs0_pin>;
+	pinctrl-0 = <&spi0_pins>;
 
 	flash@0 {
 		#address-cells = <1>;
@@ -266,7 +270,7 @@
 &spi1 {
 	status = "okay";
 	pinctrl-names = "default";
-	pinctrl-0 = <&spi1_pins>, <&spi1_cs0_pin>;
+	pinctrl-0 = <&spi1_pins>, <&spi1_cs_pin>;
 
 	display@0 {
 		compatible = "sitronix,st7789v";
@@ -280,13 +284,6 @@
 	};
 };
 
-&uart0 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart0_ph_pins>;
-	status = "okay";
-};
-
-/* HDMI display pipeline */
 &de {
 	status = "okay";
 };
@@ -302,10 +299,8 @@
 	};
 };
 
-&tcon_tv {
-	status = "okay";
-};
-
-&tcon_top {
+&uart0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_ph_pins>;
 	status = "okay";
 };
