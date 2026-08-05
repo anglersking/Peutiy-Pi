@@ -47,6 +47,12 @@ RUN git config --global http.postBuffer 524288000 && \
     git clone https://github.com/lwfinger/rtl8723ds && \
     git clone https://github.com/YuzukiHD/Xradio-XR829.git -b 5.15
 
+
+# 修复 rtl8723ds 在 5.19 内核上的 API 不兼容
+# stop_ap: 5.19 没有 link_id 参数(6.0 才加); wdev->connected 在 5.19 已移除
+RUN sed -i "s/KERNEL_VERSION(5, 19, 0)/KERNEL_VERSION(6, 0, 0)/g" \
+        /rtl8723ds/os_dep/linux/ioctl_cfg80211.c
+
 # 无线驱动拷入内核树
 RUN cp -r /rtl8723ds /linux/drivers/net/wireless/realtek/rtl8723ds && \
     cp -r /Xradio-XR829 /linux/drivers/net/wireless/realtek/xr829
