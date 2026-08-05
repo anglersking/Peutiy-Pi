@@ -60,6 +60,9 @@ COPY ./rtl8Kconfig /linux/drivers/net/wireless/realtek/rtl8723ds/Kconfig
 COPY ./realtek_Kconfig /linux/drivers/net/wireless/realtek/Kconfig
 COPY ./linux_main_realtek_Makefile /linux/drivers/net/wireless/realtek/Makefile
 
+# 使用 YuzukiHD dtsi (包含 HDMI display pipeline: mixer/tcon/hdmi)
+COPY ./sun50i-h616-yuzuki.dtsi /linux/arch/arm64/boot/dts/allwinner/sun50i-h616.dtsi
+
 # 自定义 DTS + 内核配置
 COPY ./main_sun50i-h616-orangepi-zero2.dts /linux/arch/arm64/boot/dts/allwinner/sun50i-h616-orangepi-zero2.dts
 COPY ./linux_main_menuconfig /linux/.config
