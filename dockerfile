@@ -93,6 +93,10 @@ RUN cd /buildroot-2022.02.5 && make -j2
 COPY ./buildroot_finally_config /buildroot-2022.02.5/.config
 RUN cd /buildroot-2022.02.5 && make -j2
 
+# ====== 把内核模块装进 Buildroot target ======
+RUN mkdir -p /buildroot-2022.02.5/output/target/lib/modules && \
+    cp -r /linux-6.0.19/MINSTALL/lib/modules/* /buildroot-2022.02.5/output/target/lib/modules/
+
 # ====== Debian bullseye rootfs ======
 RUN mkdir -p /path/to/rootfs && \
     debootstrap --foreign --arch=arm64 bullseye /path/to/rootfs https://mirrors.tuna.tsinghua.edu.cn/debian/ && \
