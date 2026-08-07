@@ -243,9 +243,104 @@ fbtest --fb /dev/fb1
 └── sdcard_make/                   # SD 卡制作脚本
 ```
 
+## SD 卡镜像制作
+
+### 自动化制作（容器内 `shuaxie.sh`）
+
+镜像在容器构建时自动生成，位于 `/out/image/`。结构：
+
+```
+分区1 (FAT32, 128M):  /Image  /sun50i-h616-orangepi-zero2.dtb  /boot.scr
+分区2 (ext4):          Buildroot rootfs + /lib/modules/
+8KB 偏移:              U-Boot SPL
+```
+
+### 手动制作（macOS / Linux）
+
+```bash
+# 1. 准备空镜像
+IMG=sdcard_buildroot.img
+dd if=/dev/zero of=$IMG bs=1M count=2048
+
+# 2. 分区 (MBR, 双分区)
+#    分区1: 128MB FAT32 (起始 sector 40960 = 20MB, 留给 U-Boot)
+#    分区2: ext4 (剩余空间)
+fdisk $IMG << EOF
+o
+n
+p
+1
+40960
++128M
+n
+p
+2
+
+
+w
+EOF
+
+# 3. 写入 U-Boot SPL (8KB 偏移)
+dd if=u-boot-sunxi-with-spl.bin of=$IMG bs=8K seek=1 conv=notrunc
+
+# 4. 创建 loop 设备并格式化 (macOS)
+# 略 — 推荐用 Linux 或容器内工具完成
+
+# ----- Linux 上继续 -----
+LOOP=$(losetup -Pf --show $IMG)
+mkfs.fat -F 32 ${LOOP}p1
+mkfs.ext4 ${LOOP}p2
+
+# 5. 写入 boot 分区
+mount ${LOOP}p1 /mnt/boot
+cp Image /mnt/boot/
+cp sun50i-h616-orangepi-zero2.dtb /mnt/boot/
+cp boot.scr /mnt/boot/
+umount /mnt/boot
+
+# 6. 写入 rootfs
+mount ${LOOP}p2 /mnt/rootfs
+tar xf rootfs.tar -C /mnt/rootfs
+mkdir -p /mnt/rootfs/lib/modules
+cp -r modules/lib/modules/* /mnt/rootfs/lib/modules/
+umount /mnt/rootfs
+
+losetup -d $LOOP
+```
+
+### 烧录到 SD 卡
+
+```bash
+# ⚠️ 用 diskutil list (macOS) 或 lsblk (Linux) 确认 SD 卡设备！
+
+# macOS (用 rdisk 更快):
+ diskutil unmountDisk /dev/diskX
+ sudo dd if=sdcard_buildroot.img of=/dev/rdiskX bs=4m status=progress
+
+# Linux:
+ sudo dd if=sdcard_buildroot.img of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+### 镜像适配小容量 SD 卡
+
+如果镜像大小超出 SD 卡实际可用扇区数（比如标称 2G 的卡实际只有 1.84 GiB），需要缩小分区：
+
+```bash
+# 1. 检查 ext4 实际使用量
+dumpe2fs -h p2_partition.img 2>/dev/null | grep -E 'Block count|Free blocks|Block size'
+
+# 2. 缩小文件系统（保留余量）
+ e2fsck -f p2_partition.img
+ resize2fs -f p2_partition.img <new_block_count>
+
+# 3. 修改 MBR 分区表中的 p2 扇区数，截断镜像
+# 4. 重新 dd 烧录
+```
+
 ## 注意事项
 
 - **内核来源**: 使用 apritzel/linux `h616-v13` 分支，含完整 HDMI/H616 驱动 + DTS
+- **内核 compatible 匹配**: DTS 中 HDMI 相关节点必须使用 H6 compatible（`sun50i-h6-dw-hdmi` 等），不能使用 H616 命名（主线 6.0.19 内核未注册 H616 变体）
 - **不要用主线 linux-6.0.19** — 缺少 H616 HDMI DTS 节点 (`&de`/`&hdmi`/`&hdmi_out`)
 - **工具链**: ARM 官方 10.3，前缀 `aarch64-none-linux-gnu-`
 - **编译并行度**: `-j2` (适配路由器弱 CPU)，如果自己的机器跑可以改大
